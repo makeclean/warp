@@ -96,7 +96,8 @@ set(libs ${libs} ${CUDA_curand_LIBRARY})
 include_directories(${CUDPP_INCLUDE_DIR})
 
 #http://stackoverflow.com/questions/11041299/python-h-no-such-file-or-directory
-find_package(PythonLibs REQUIRED)
+set(Python_ADDITIONAL_VERSIONS 3.3)
+find_package(PythonLibs 3.3 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 set(libs ${libs} ${PYTHON_LIBRARIES})
 
