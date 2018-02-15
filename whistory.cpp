@@ -522,7 +522,7 @@ void whistory::copy_python_buffer(float** device_pointer,float** host_pointer,st
 	Py_buffer pBuff;
 
 	// get the MT array buffer from Python
-	call_string = PyString_FromString(function_name.c_str());
+	call_string = PyBytes_FromString(function_name.c_str());
 	call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 	Py_DECREF(call_string);
 	if (PyObject_CheckBuffer(call_result)){
@@ -566,7 +566,7 @@ void whistory::copy_python_buffer(unsigned** device_pointer,unsigned** host_poin
 	Py_buffer pBuff;
 
 	// get the MT array buffer from Python
-	call_string = PyString_FromString(function_name.c_str());
+	call_string = PyBytes_FromString(function_name.c_str());
 	call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 	Py_DECREF(call_string);
 	if (PyObject_CheckBuffer(call_result)){
@@ -610,7 +610,7 @@ void whistory::copy_python_buffer(float** host_pointer,std::string function_name
 	Py_buffer pBuff;
 
 	// get the MT array buffer from Python
-	call_string = PyString_FromString(function_name.c_str());
+	call_string = PyBytes_FromString(function_name.c_str());
 	call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 	Py_DECREF(call_string);
 	if (PyObject_CheckBuffer(call_result)){
@@ -650,7 +650,7 @@ void whistory::copy_python_buffer(unsigned** host_pointer,std::string function_n
 	Py_buffer pBuff;
 
 	// get the MT array buffer from Python
-	call_string = PyString_FromString(function_name.c_str());
+	call_string = PyBytes_FromString(function_name.c_str());
 	call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 	Py_DECREF(call_string);
 	if (PyObject_CheckBuffer(call_result)){
@@ -699,7 +699,7 @@ int whistory::init_python(){
 		do_final=1;
 	}
 
-	pName = PyString_FromString("unionize");
+	pName = PyBytes_FromString("unionize");
 	pModule = PyImport_Import(pName);
 	Py_DECREF(pName);
 
@@ -709,7 +709,7 @@ int whistory::init_python(){
 		return 0;	
 	}
 
-	pName = PyString_FromString("cross_section_data");
+	pName = PyBytes_FromString("cross_section_data");
 	xsdat_instance = PyObject_CallMethodObjArgs(pModule,pName,NULL);
 	PyErr_Print();
 	Py_DECREF(pName);
@@ -719,8 +719,8 @@ int whistory::init_python(){
 
 		// init the libraries wanted
 		for (int i=0; i<n_isotopes; i++){
-			call_string = PyString_FromString("_add_isotope");
-			arg_string  = PyString_FromString(isotopes[i].c_str());
+			call_string = PyBytes_FromString("_add_isotope");
+			arg_string  = PyBytes_FromString(isotopes[i].c_str());
 			call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, arg_string, NULL);
 			PyErr_Print();
 			Py_DECREF(arg_string);
@@ -729,8 +729,8 @@ int whistory::init_python(){
 		}
 	
 		// read the tables
-		call_string = PyString_FromString("_read_tables");
-		arg_string  = PyString_FromString(problem_geom.datapath.c_str());
+		call_string = PyBytes_FromString("_read_tables");
+		arg_string  = PyBytes_FromString(problem_geom.datapath.c_str());
 		call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, arg_string, NULL);
 		PyErr_Print();
 		Py_DECREF(arg_string);
@@ -738,28 +738,28 @@ int whistory::init_python(){
 		Py_DECREF(call_result);
 
 		// unionize the main energy grid across all isotopes
-		call_string = PyString_FromString("_unionize");
+		call_string = PyBytes_FromString("_unionize");
 		call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 		PyErr_Print();
 		Py_DECREF(call_string);
 		Py_DECREF(call_result);
 
 		// make the total MT reaction list from all isotopes
-		call_string = PyString_FromString("_insert_reactions");
+		call_string = PyBytes_FromString("_insert_reactions");
 		call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 		PyErr_Print();
 		Py_DECREF(call_string);
 		Py_DECREF(call_result);
 
 		// allocate the unionized array
-		call_string = PyString_FromString("_allocate_arrays");
+		call_string = PyBytes_FromString("_allocate_arrays");
 		call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 		PyErr_Print();
 		Py_DECREF(call_string);
 		Py_DECREF(call_result);
 
 		// insert and interpolate the cross sections
-		call_string = PyString_FromString("_interpolate");
+		call_string = PyBytes_FromString("_interpolate");
 		call_result = PyObject_CallMethodObjArgs(xsdat_instance, call_string, NULL);
 		PyErr_Print();
 		Py_DECREF(call_string);
@@ -882,9 +882,9 @@ void whistory::copy_scatter_data(){
 
 			// call python object, which returns the two buffers 
 			// and the main e grid index that it needs to be replicated to
-			row_obj     = PyInt_FromLong     (row);
-			col_obj     = PyInt_FromLong     (col);
-			call_string = PyString_FromString("_get_scatter_data");
+			row_obj     = PyLong_FromLong     (row);
+			col_obj     = PyLong_FromLong     (col);
+			call_string = PyBytes_FromString("_get_scatter_data");
 			obj_list    = PyObject_CallMethodObjArgs(xsdat_instance, call_string, row_obj, col_obj, NULL);
 			PyErr_Print();
 
@@ -908,12 +908,12 @@ void whistory::copy_scatter_data(){
 
 			// copy erg, law, intt and next index.  These will always be datatypes as shown.  len can be a single int value for regular scattering, or a float array for nu data
 			h_lower_dist.erg	=	PyFloat_AsDouble(	lower_erg_obj);
-			h_lower_dist.law	=	PyInt_AsLong(		lower_law_obj);
-			h_lower_dist.intt	=	PyInt_AsLong(		lower_intt_obj);
+			h_lower_dist.law	=	PyLong_AsLong(		lower_law_obj);
+			h_lower_dist.intt	=	PyLong_AsLong(		lower_intt_obj);
 			h_upper_dist.erg	=	PyFloat_AsDouble(	upper_erg_obj);
-			h_upper_dist.law	=	PyInt_AsLong(		upper_law_obj);
-			h_upper_dist.intt	=	PyInt_AsLong(		upper_intt_obj);
-			next_dex			=	PyInt_AsLong(		next_dex_obj);
+			h_upper_dist.law	=	PyLong_AsLong(		upper_law_obj);
+			h_upper_dist.intt	=	PyLong_AsLong(		upper_intt_obj);
+			next_dex			=	PyLong_AsLong(		next_dex_obj);
 			PyErr_Print();
 
 			// decide what to put in the array according to length reported
@@ -1103,8 +1103,8 @@ void whistory::copy_scatter_data(){
 				}
 
 				// get scalars whose types can change
-				h_lower_dist.len	=	PyInt_AsLong(	lower_len_obj);
-				h_upper_dist.len	=	PyInt_AsLong(	upper_len_obj);
+				h_lower_dist.len	=	PyLong_AsLong(	lower_len_obj);
+				h_upper_dist.len	=	PyLong_AsLong(	upper_len_obj);
 
 				// get array size info 
 				get_Py_buffer_dims(&lower_var_buff_rows, &lower_var_buff_columns, &lower_var_buff_bytes, &lower_var_buff);
@@ -1186,8 +1186,8 @@ void whistory::copy_scatter_data(){
 			else{
 				// normal scattering distributions
 				// get scalars whose types can change
-				h_lower_dist.len	=	PyInt_AsLong(	lower_len_obj);
-				h_upper_dist.len	=	PyInt_AsLong(	upper_len_obj);
+				h_lower_dist.len	=	PyLong_AsLong(	lower_len_obj);
+				h_upper_dist.len	=	PyLong_AsLong(	upper_len_obj);
 
 				// get new pointers for temp arrays according to length reported
 				h_lower_dist.var	=	new 	float[h_lower_dist.len];
@@ -1411,9 +1411,9 @@ void whistory::copy_energy_data(){
 
 			// call python object, which returns the two buffers 
 			// and the main e grid index that it needs to be replicated to
-			row_obj     = PyInt_FromLong     (row);
-			col_obj     = PyInt_FromLong     (col);
-			call_string = PyString_FromString("_get_energy_data");
+			row_obj     = PyLong_FromLong     (row);
+			col_obj     = PyLong_FromLong     (col);
+			call_string = PyBytes_FromString("_get_energy_data");
 			obj_list    = PyObject_CallMethodObjArgs(xsdat_instance, call_string, row_obj, col_obj, NULL);
 			PyErr_Print();
 
@@ -1437,14 +1437,14 @@ void whistory::copy_energy_data(){
 
 			// copy single values to temp objects
 			h_lower_dist.erg	=	PyFloat_AsDouble(	lower_erg_obj);
-			h_lower_dist.len	=	PyInt_AsLong(		lower_len_obj);
-			h_lower_dist.law	=	PyInt_AsLong(		lower_law_obj);
-			h_lower_dist.intt	=	PyInt_AsLong(		lower_intt_obj);
+			h_lower_dist.len	=	PyLong_AsLong(		lower_len_obj);
+			h_lower_dist.law	=	PyLong_AsLong(		lower_law_obj);
+			h_lower_dist.intt	=	PyLong_AsLong(		lower_intt_obj);
 			h_upper_dist.erg	=	PyFloat_AsDouble(	upper_erg_obj);
-			h_upper_dist.len	=	PyInt_AsLong(		upper_len_obj);
-			h_upper_dist.law	=	PyInt_AsLong(		upper_law_obj);
-			h_upper_dist.intt	=	PyInt_AsLong(		upper_intt_obj);
-			next_dex			=	PyInt_AsLong(		next_dex_obj);
+			h_upper_dist.len	=	PyLong_AsLong(		upper_len_obj);
+			h_upper_dist.law	=	PyLong_AsLong(		upper_law_obj);
+			h_upper_dist.intt	=	PyLong_AsLong(		upper_intt_obj);
+			next_dex			=	PyLong_AsLong(		next_dex_obj);
 			PyErr_Print();
 
 

@@ -5,7 +5,9 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
-#include <png++/png.hpp>
+#include <cstdio>
+#include <cstdlib>
+//#include "png++/png.hpp"
 #include "datadef.h"
 #include "wprimitive.h"
 #include "wgeometry.h"
