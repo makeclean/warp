@@ -23,6 +23,10 @@ __global__ void find_E_grid_index_kernel(unsigned N, cross_section_data* d_xsdat
 	// return if terminated
 	unsigned this_rxn=rxn[tid_in];
 	if (this_rxn>=900){return;}
+	if (E[tid_in] <= 0.) {
+	   rxn[tid_in] = 900;
+	   return;
+	}
 
 	// remap
 	int tid=remap[tid_in];

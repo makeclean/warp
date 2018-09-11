@@ -105,9 +105,9 @@ Calculates the sum of a cross section range.  This routine has a multiplier arra
 */
 	float macro_t_total = 0.0;
 
-	for( int k=0; k<length; k++ ){
-		// interpolate and accumulate
-		macro_t_total += ( (array1[k]-array0[k])/(energy1-energy0)*(this_E-energy0) + array0[k] ) * multiplier[k];
+	for ( int k = 0 ; k < length ; k++ ) {
+	  // interpolate and accumulate
+	  macro_t_total += ( (array1[k]-array0[k])/(energy1-energy0)*(this_E-energy0) + array0[k] ) * multiplier[k];
 	}
 
 	return macro_t_total;

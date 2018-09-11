@@ -53,7 +53,7 @@ whistory::whistory(unsigned Nin, wgeometry problem_geom_in){
 	// device data stuff
 	N = Nin;
 	// 3 should be more than enough for criticality, might not be for fixed
-	Ndataset = Nin * 1.5;
+	Ndataset = Nin * 5;
 	reduced_yields_total = 0;
 	reduced_weight_total = 0;
 	initial_weight_total = 0;
@@ -217,7 +217,7 @@ void whistory::init_host(){
 		h_particles.space[k].norm[0]		= 1;
 		h_particles.space[k].norm[1]		= 0;
 		h_particles.space[k].norm[2]		= 0;
-		h_particles.E[k]					= 2.5;
+		h_particles.E[k]					= 14.08;
 		h_particles.Q[k]					= 0.0;
 		h_particles.cellnum[k]				= 0;
 		h_particles.talnum[k]				= -1;
@@ -450,7 +450,7 @@ void whistory::accumulate_keff(unsigned converged, unsigned iteration, double* k
 	long unsigned 	reduced_yields	=	reduce_yield();
 	double 	      	reduced_weight	=	reduce_weight();
 	double			initial_weight  =	N;
-	printf("reduce_yield %lu reduce_weight %6.4E starting weight %6.4E\n",reduced_yields,reduced_weight,initial_weight);
+	//printf("reduce_yield %lu reduce_weight %6.4E starting weight %6.4E\n",reduced_yields,reduced_weight,initial_weight);
 
 	*keff_cycle = reduced_yields / reduced_weight;
 
@@ -1612,7 +1612,9 @@ void whistory::init_cross_sections(){
 
 	// Make python object ready for queries - init python, load cross sections, etc.
 	do_final = init_python();
-
+	//for ( int i = 0 ; i < sizeof(h_xsdata.energy_grid)/sizeof(float) ; i++ ) {
+	//  printf("%6.4e\n",h_xsdata.xs[i]);
+	//} 
 	// copy various cross section arrays from python
 	copy_python_buffer(&dh_xsdata.xs,         			&h_xsdata.xs,         			"_get_MT_array_pointer");
 	copy_python_buffer(&dh_xsdata.energy_grid,			&h_xsdata.energy_grid,			"_get_main_Egrid_pointer");
@@ -1641,6 +1643,9 @@ void whistory::init_cross_sections(){
 	// intialization complete, copy host structure (containing device pointers) to device structure
 	check_cuda(cudaMemcpy( d_xsdata,	&dh_xsdata,	1*sizeof(cross_section_data),	cudaMemcpyHostToDevice));
 	check_cuda(cudaPeekAtLastError());
+
+	//printf("size %i\n", sizeof(d_xsdata.xs[0]));
+	//printf("size %i\n", sizeof(d_xsdata.xs[1]));
 
 	// check a particular pointer range
 	//check_pointers(NUM_THREADS,28961291,28961291,d_xsdata);
@@ -1675,13 +1680,22 @@ void whistory::init_cross_sections(){
 
 }
 void whistory::print_xs_data(){  
+  printf("num iso %i\n", h_xsdata.n_isotopes);
+  printf("num channels %i\n", h_xsdata.total_reaction_channels);
+  printf("num ebins %i\n", h_xsdata.energy_grid_len);
 
+  for ( int i = 0 ; i < h_xsdata.total_reaction_channels ; i++ ) {    
+    for ( int j = 0 ; j < h_xsdata.energy_grid_len ; j++ ) {
+      //i + (j*h_xs_data_total_reaction_channels)
+      printf("%6.4e %i %i\n",h_xsdata.xs[i + (j*(h_xsdata.total_reaction_channels+1))], j*(1+h_xsdata.total_reaction_channels) ,(i*j)+j); 
+    }
+  }	
 }
+
 void whistory::write_xs_data(std::string filename){
 
-
-
 }
+
 void whistory::print_pointers(){
 
 }
@@ -1922,6 +1936,7 @@ void whistory::reset_fixed(){
 //
 //	//set position, direction, energy
 //	sample_fixed_source( NUM_THREADS, N, d_active, dh_particles.rn_bank, d_E, d_space);
+//	sample_fixed_source( NUM_THREADS, N, dh_particles.rn_bank, dh_particles.E, dh_particles.space);
 //
 //	// update RNG seeds
 //	update_RNG();
@@ -2570,16 +2585,18 @@ void whistory::plot_geom(std::string type_in){
 	printf("  xy aspect ratio of outer cell: %6.4f\n",aspect);
 	width_in  = resolution*aspect;
 	height_in = resolution;
+	
 	if (width_in*height_in > N){
 		width  = sqrtf(N*aspect); 
 		height = sqrtf(N/aspect);
 		printf("  !resolution reduced by dataset size ->");
 		printf("  (height,width) (%u,%u) px\n",height,width);
 	}else{
+	
 		width = width_in;
 		height = height_in;
 		printf(" (height,width) (%u,%u) px\n",height,width);
-	}
+		}
 	N_plot = width*height;
 	dx = (xmax-xmin)/width;
 	dy = (ymax-ymin)/height;
@@ -2633,16 +2650,18 @@ void whistory::plot_geom(std::string type_in){
 	printf("  xz aspect ratio of outer cell: %6.4f\n",aspect);
 	width_in  = resolution*aspect;
 	height_in = resolution;
+	
 	if (width_in*height_in > N){
 		width  = sqrtf(N*aspect); 
 		height = sqrtf(N/aspect);
 		printf("  !resolution reduced by dataset size ->");
 		printf("  (height,width) (%u,%u) px\n",height,width);
 	}else{
+	
 		width = width_in;
 		height = height_in;
 		printf(" (height,width) (%u,%u) px\n",height,width);
-	}
+		}
 	N_plot = width*height;
 	dx = (xmax-xmin)/width;
 	dz = (zmax-zmin)/height;
@@ -2694,16 +2713,18 @@ void whistory::plot_geom(std::string type_in){
 	printf("  yz aspect ratio of outer cell: %6.4f\n",aspect);
 	width_in  = resolution*aspect;
 	height_in = resolution;
+	
 	if (width_in*height_in > N){
 		width  = sqrtf(N*aspect); 
 		height = sqrtf(N/aspect);
 		printf("  !resolution reduced by dataset size ->");
 		printf("  (height,width) (%u,%u) px\n",height,width);
 	}else{
+	
 		width = width_in;
 		height = height_in;
 		printf(" (height,width) (%u,%u) px\n",height,width);
-	}
+		}
 	N_plot = width*height;
 	dy = (ymax-ymin)/width;
 	dz = (zmax-zmin)/height;

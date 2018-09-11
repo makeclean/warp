@@ -9,7 +9,7 @@ int main(int argc, char* argv[]){
 	///////////////////
 
 	// names
-	unsigned tallycell = 999, outer_cell=999;
+	unsigned tallycell = 999, outer_cell = 999;
 	unsigned N = 0;
 	std::string tallyname, filename, runtype;
 	std::string homfuelname		= "homfuel";
@@ -25,8 +25,8 @@ int main(int argc, char* argv[]){
 	std::string card1name 	 	= "k20";
 	std::string card2name 	 	= "k80";
 	std::string card3name 	 	= "titan";
-
-
+        std::string fusionspherename    = "sphere";
+ 
 	// check
 	if(argc<=2){
 		printf("MUST ENTER A RUN TYPE : ");
@@ -38,6 +38,7 @@ int main(int argc, char* argv[]){
 		printf("%s, ",pincellname.c_str());
 		printf("%s, ",sodiumpinname.c_str());
 		printf("%s, ",testname.c_str());
+                printf("%s, ",fusionspherename.c_str());
 		printf("and a number of neutrons per cycle!\n");
 		//printf("and a card name (%s %s %s %s)!\n",card0name.c_str(),card1name.c_str(),card2name.c_str(),card3name.c_str());
 		exit(0);
@@ -59,7 +60,9 @@ int main(int argc, char* argv[]){
 	// set datapath
 	//geom.set_datapath("/usr/local/LANL/MCNP6_DATA/xsdir_mcnp6.1");
 	//geom.set_datapath("/usr/local/SERPENT/xsdata/endfb7/sss_endfb7u.xsdir");
-	geom.set_datapath("/scratch/bergmann_r/SERPENT/xsdata/endfb7/sss_endfb7u.xsdir");
+	//geom.set_datapath("/scratch/bergmann_r/SERPENT/xsdata/endfb7/sss_endfb7u.xsdir");
+	//geom.set_datapath("/home/dc-davi4/xsdata/ENDF-B-VII.1-neutron-293.6K/xsdir.serp");
+	geom.set_datapath("/home/dc-davi4/xsdata/endfvi/xsdir.serp");
 
 	if(assemblyname.compare(argv[1])==0){
 		//assembly mats
@@ -68,15 +71,15 @@ int main(int argc, char* argv[]){
 		std::vector<float>    fracs_fuel  (n_topes);
 		std::vector<float>    fracs_water (n_topes);
 		std::vector<float>    fracs_clad  (n_topes);
-		topes[0] = "92235.03c";
-		topes[1] = "92238.03c";
-		topes[2] =  "8016.03c" ;
-		topes[3] =  "1001.03c" ;
-		topes[4] = "40090.03c";
- 		topes[5] = "40091.03c";
- 		topes[6] = "40092.03c";
- 		topes[7] = "40094.03c";
- 		topes[8] = "40096.03c";
+		topes[0] = "92235.71c";
+		topes[1] = "92238.71c";
+		topes[2] =  "8016.71c" ;
+		topes[3] =  "1001.71c" ;
+		topes[4] = "40090.71c";
+ 		topes[5] = "40091.71c";
+ 		topes[6] = "40092.71c";
+ 		topes[7] = "40094.71c";
+ 		topes[8] = "40096.71c";
 		fracs_fuel[0] = 0.1;  
 		fracs_fuel[1] = 0.9;   
 		fracs_fuel[2] = 2;   
@@ -173,14 +176,14 @@ int main(int argc, char* argv[]){
 		std::vector<std::string> 	topes      (n_topes);
 		std::vector<float> 			fracs_fuel (n_topes);
 		std::vector<float> 			fracs_flibe(n_topes);
-		topes[0] = "92235.12c";
-		topes[1] = "92238.12c";
-		topes[2] =  "8016.12c";
-		topes[3] =  "6000.12c";
-		topes[4] =  "3006.09c";
-		topes[5] =  "3007.09c";
-		topes[6] =  "4009.09c";
-		topes[7] =  "9019.09c";
+		topes[0] = "92235.71c";
+		topes[1] = "92238.71c";
+		topes[2] =  "8016.71c";
+		topes[3] =  "6000.71c";
+		topes[4] =  "3006.71c";
+		topes[5] =  "3007.71c";
+		topes[6] =  "4009.71c";
+		topes[7] =  "9019.71c";
 
 		fracs_fuel[0] = 0.10 ;  
 		fracs_fuel[1] = 0.90;   
@@ -240,32 +243,64 @@ int main(int argc, char* argv[]){
 		prim_id=geom.add_primitive(type,material,mins,maxs,origin);
 		geom.add_transform(prim_id,999,0,0,0,0,0);
 	}
+        else if(fusionspherename.compare(argv[1]) == 0 ) {
+                // simple sphere
+                n_topes = 1;
+                std::vector<std::string> topes (n_topes);
+                std::vector<float> mat_fracs (n_topes);
+                topes[0] = "3006.66c";
+                mat_fracs[0] = 1.0;
+	        float mat_density = 1.0;
+	        // add a material
+                geom.add_material(1,0,n_topes,mat_density,topes,mat_fracs);
+                type=3; // sphere
+                material=1;
+                mins[0]= -30.0;
+                mins[1]= -30.0;
+                mins[2]= -30.0;
+                maxs[0]=  30.0;
+                maxs[1]=  30.0;
+                maxs[2]=  30.0;
+                origin[0]=0.0;
+                origin[1]=0.0;
+                origin[2]=0.0;
+                prim_id=geom.add_primitive(type,material,mins,maxs,origin);
+                geom.add_transform(prim_id,999,0,0,0,0,0);               
+		// run stuff
+		tallycell = 999;
+		filename  = "sphere";
+                tallyname = "flux";
+                tallyname.append(".tally");
+                bc = 1;
+                runtype = "fixed";
+
+        }
 	else if(fusionname.compare(argv[1])==0){
 		// fusion mats
-		n_topes = 18;
+ 		n_topes = 18;
 		std::vector<std::string> topes  (n_topes);
 		std::vector<float>  void_fracs  (n_topes);
 		std::vector<float>   sic_fracs  (n_topes);
 		std::vector<float>    li_fracs  (n_topes);
 		std::vector<float>    ss_fracs  (n_topes);
-		topes[0]  =  "6000.03c";
-		topes[1]  = "14028.03c";
-		topes[2]  = "14029.03c";
-		topes[3]  = "14030.03c";
-		topes[4]  =  "3006.03c";
-		topes[5]  =  "3007.03c";
-		topes[6]  = "26054.03c";
-		topes[7]  = "26056.03c";
-		topes[8]  = "26057.03c";
-		topes[9]  = "26058.03c";
-		topes[10] = "24050.03c";
-		topes[11] = "24052.03c";
-		topes[12] = "24053.03c";
-		topes[13] = "24054.03c";
-		topes[14] = "28058.03c";
-		topes[15] = "28060.03c";
-		topes[16] = "28062.03c";
-		topes[17] = "28064.03c";
+		topes[0]  =  "6000.71c";
+		topes[1]  = "14028.71c";
+		topes[2]  = "14029.71c";
+		topes[3]  = "14030.71c";
+		topes[4]  =  "3006.71c";
+		topes[5]  =  "3007.71c";
+		topes[6]  = "26054.71c";
+		topes[7]  = "26056.71c";
+		topes[8]  = "26057.71c";
+		topes[9]  = "26058.71c";
+		topes[10] = "24050.71c";
+		topes[11] = "24052.71c";
+		topes[12] = "24053.71c";
+		topes[13] = "24054.71c";
+		topes[14] = "28058.71c";
+		topes[15] = "28060.71c";
+		topes[16] = "28062.71c";
+		topes[17] = "28064.71c";
 
 		void_fracs[0]  = 0.0;
 		void_fracs[1]  = 0.0;
@@ -286,7 +321,7 @@ int main(int argc, char* argv[]){
 		void_fracs[16] = 0.0;
 		void_fracs[17] = 0.0;
 
-		sic_fracs[0]  = 1.0;
+		sic_fracs[0]  = 0.0;
 		sic_fracs[1]  = 0.9223;
 		sic_fracs[2]  = 0.0467;
 		sic_fracs[3]  = 0.0310;
@@ -353,12 +388,12 @@ int main(int argc, char* argv[]){
 		geom.add_material(3,0,n_topes,  ss_dens,topes,  ss_fracs);
 		
 		// run stuff
-		tallycell = 999;
-		filename  = fusionname;
-		tallyname = fusionname;
-		tallyname.append(".tally");
-		bc = 1;
-		runtype = "fixed";
+		tallycell = 0;
+		filename  = "sphere";
+                tallyname = "flux";
+                tallyname.append(".tally");
+                bc = 1;
+                runtype = "fixed";
 	
 		//fusion geom
 		type=3;
@@ -426,12 +461,12 @@ int main(int argc, char* argv[]){
 		n_topes = 6;
 		std::vector<std::string> topes (n_topes);
 		std::vector<float>    fracs (n_topes);
-		topes[0] = "94239.03c";
-		topes[1] = "94240.03c";
-		topes[2] = "94241.03c";
-		topes[3] = "94242.03c";
-		topes[4] = "31069.03c";
-		topes[5] = "31071.03c";
+		topes[0] = "94239.71c";
+		topes[1] = "94240.71c";
+		topes[2] = "94241.71c";
+		topes[3] = "94242.71c";
+		topes[4] = "31069.71c";
+		topes[5] = "31071.71c";
 		fracs[0] = 0.029934;
 		fracs[1] = 0.0078754;
 		fracs[2] = 0.0012146;
@@ -472,15 +507,15 @@ int main(int argc, char* argv[]){
 		std::vector<float>    fracs_fuel  (n_topes);
 		std::vector<float>    fracs_water (n_topes);
 		std::vector<float>    fracs_clad  (n_topes);
-		topes[0] = "92235.03c";
-		topes[1] = "92238.03c";
-		topes[2] =  "8016.03c" ;
-		topes[3] =  "1002.03c" ;
-		topes[4] = "40090.03c";
- 		topes[5] = "40091.03c";
- 		topes[6] = "40092.03c";
- 		topes[7] = "40094.03c";
- 		topes[8] = "40096.03c";
+		topes[0] = "92235.71c";
+		topes[1] = "92238.71c";
+		topes[2] =  "8016.71c" ;
+		topes[3] =  "1002.71c" ;
+		topes[4] = "40090.71c";
+ 		topes[5] = "40091.71c";
+ 		topes[6] = "40092.71c";
+ 		topes[7] = "40094.71c";
+ 		topes[8] = "40096.71c";
 		fracs_fuel[0] = 0.1;  
 		fracs_fuel[1] = 0.9;   
 		fracs_fuel[2] = 2;   
@@ -575,15 +610,15 @@ int main(int argc, char* argv[]){
 		n_topes = 9;
 		std::vector<std::string> topes (n_topes);
 		std::vector<float>    fracs_fuel  (n_topes);
-		topes[0] = "92235.03c";
-		topes[1] = "92238.03c";
-		topes[2] =  "8016.03c" ;
-		topes[3] =  "1002.03c" ;
-		topes[4] = "40090.03c";
- 		topes[5] = "40091.03c";
- 		topes[6] = "40092.03c";
- 		topes[7] = "40094.03c";
- 		topes[8] = "40096.03c";
+		topes[0] = "92235.71c";
+		topes[1] = "92238.71c";
+		topes[2] =  "8016.71c" ;
+		topes[3] =  "1002.71c" ;
+		topes[4] = "40090.71c";
+ 		topes[5] = "40091.71c";
+ 		topes[6] = "40092.71c";
+ 		topes[7] = "40094.71c";
+ 		topes[8] = "40096.71c";
 		fracs_fuel[0] = 0.1;  
 		fracs_fuel[1] = 0.9;   
 		fracs_fuel[2] = 3;   
@@ -626,10 +661,10 @@ int main(int argc, char* argv[]){
 		std::vector<std::string> topes (n_topes);
 		std::vector<float>    fracs_fuel  (n_topes);
 		std::vector<float>    fracs_water  (n_topes);
-		topes[0] = "92235.03c";
-		topes[1] = "40090.03c";
-		topes[2] = "8016.03c";
-		topes[3] = "1002.03c";
+		topes[0] = "92235.71c";
+		topes[1] = "40090.71c";
+		topes[2] = "8016.71c";
+		topes[3] = "1002.71c";
 		fracs_fuel[0] = 0.1;  
 		fracs_fuel[1] = 0.9;
 		fracs_fuel[2] = 0.0;  
@@ -706,21 +741,21 @@ int main(int argc, char* argv[]){
 		std::vector<float>    fracs_fuel  (n_topes);
 		std::vector<float>    fracs_water (n_topes);
 		std::vector<float>    fracs_clad  (n_topes);
-		topes[0]= "92235.09c";
-		topes[1]= "92238.09c";
-		topes[2]= "11023.06c" ;
-		topes[3]= "26054.09c" ;
-		topes[4]= "26056.09c";
- 		topes[5]= "26057.09c";
- 		topes[6]= "26058.09c";
- 		topes[7]= "24050.09c";
- 		topes[8]= "24052.09c";
- 		topes[9]= "24053.09c";
- 		topes[10]="24054.09c";
- 		topes[11]="28058.09c";
- 		topes[12]="28060.09c";
- 		topes[13]="28062.09c";
- 		topes[14]="28064.09c";
+		topes[0]= "92235.71c";
+		topes[1]= "92238.71c";
+		topes[2]= "11023.71c" ;
+		topes[3]= "26054.71c" ;
+		topes[4]= "26056.71c";
+ 		topes[5]= "26057.71c";
+ 		topes[6]= "26058.71c";
+ 		topes[7]= "24050.71c";
+ 		topes[8]= "24052.71c";
+ 		topes[9]= "24053.71c";
+ 		topes[10]="24054.71c";
+ 		topes[11]="28058.71c";
+ 		topes[12]="28060.71c";
+ 		topes[13]="28062.71c";
+ 		topes[14]="28064.71c";
 
 		fracs_fuel[0]  = 0.1;  
 		fracs_fuel[1]  = 0.9;   
@@ -860,7 +895,7 @@ int main(int argc, char* argv[]){
 
 	whistory hist ( N , geom );
 	hist.set_print_level(2);
-	hist.set_dump_level(1);
+	hist.set_dump_level(2);
 	hist.set_device(dev);
 	hist.init();
 	hist.print_xs_data();
@@ -871,7 +906,7 @@ int main(int argc, char* argv[]){
 	/////////////////////////////////////
 
 	hist.set_run_type(runtype);
-	hist.set_run_param(40,20);  //run, skip
+	hist.set_run_param(100,40);  //run, skip
 	hist.set_filename(filename);
 	hist.plot_geom("cell");  // **MUST** be called after init.
 	hist.run();

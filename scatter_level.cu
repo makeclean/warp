@@ -203,7 +203,7 @@ __global__ void scatter_level_kernel(unsigned N, unsigned starting_index, cross_
 	// calculate energy in L frame
 	E_new = 0.5 * m_n * v_n_lf.dot(v_n_lf);
 
-	//printf("tid %d E_new %6.4E xhat %6.4E yhat %6.4E zhat %6.4E\n",tid,this_E,hats_new.x,hats_new.y,hats_new.z);
+	// printf("tid %d E_new %6.4E xhat %6.4E yhat %6.4E zhat %6.4E\n",tid,this_E,hats_new.x,hats_new.y,hats_new.z);
 
 	// write results
 	E[      tid]		= E_new;

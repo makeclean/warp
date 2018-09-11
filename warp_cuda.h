@@ -23,7 +23,7 @@ void write_to_file(unsigned*,unsigned,std::string);
 
 void set_positions_rand( unsigned, unsigned, unsigned, spatial_data * , unsigned *  , float  * );
 void copy_points( unsigned , unsigned , unsigned*  , unsigned  , unsigned *  , spatial_data *  , spatial_data * , float*, float*);
-void sample_fixed_source( unsigned,unsigned,unsigned*,unsigned*,float*,spatial_data*);
+void sample_fixed_source( unsigned,unsigned,unsigned*,float*,spatial_data*);
 void macro_micro( unsigned , unsigned , unsigned ,  unsigned , unsigned , unsigned , cross_section_data* , particle_data* , tally_data* , unsigned* , float* );
 void scatter_level( cudaStream_t, unsigned , unsigned, unsigned, cross_section_data* , particle_data* , unsigned* );
 void scatter_conti( cudaStream_t, unsigned , unsigned, unsigned, cross_section_data* , particle_data* , unsigned* );

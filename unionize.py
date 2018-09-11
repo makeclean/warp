@@ -7,7 +7,7 @@ except ImportError:
 import numpy
 import sys
 import glob
-import pylab
+#import pylab
 import re
 
 ##
@@ -100,14 +100,17 @@ class cross_section_data:
 			print "!  unable to open '"+self.datapath+"[/xsdir]'!"
 			exit(0)
 
+                #self.datapath = "/home/dc-davi4/xsdata/ENDF-B-VII.1-neutron-293.6K/"
+                self.datapath = "/home/dc-davi4/xsdata/endfvi/"
 		self.xsdirstring=f.read()
 		f.close()
 
 		self.num_isotopes = 0
 
-		#  make map of file -> isotope
+		#  make map of file -> isotop
 		for tope in self.isotope_list:
-			librarypath = self._resolve_library(tope) 
+			librarypath = self._resolve_library(tope)
+                        print librarypath 
 			if librarypath in self.libraries:
 				self.libraries[librarypath].append(tope)
 			else:
@@ -116,6 +119,7 @@ class cross_section_data:
 		# open the libraries, read all isotopes present in that library
 		print "  ---------  loading data  ---------- "
 		lib={}
+                print librarypath
 		for librarypath in self.libraries:
 			print "  loading "+librarypath
 			lib[librarypath] = ace.Library(librarypath)
@@ -140,8 +144,12 @@ class cross_section_data:
 	def _resolve_library(self,tope):
 		exp = re.compile(tope+" +[0-9. a-z]+ ([a-zA-Z0-9/_.+-]+)")
 		a = exp.search(self.xsdirstring)
+               
 		if a:
-			return self.datapath+'/'+a.group(1)
+			if self.datapath != "" :
+				return self.datapath+'/'+a.group(1)
+			else:
+				return a.group(1)
 		else:
 			print " ERROR: nuclide '"+tope+"' not found in '"+self.datapath+"/xsdir'!"
 			#exit(0)
@@ -178,9 +186,10 @@ class cross_section_data:
 						self.MT_E_grid=numpy.union1d(self.MT_E_grid,rxn.energy_dist.energya_in)
 					if hasattr(rxn.energy_dist,"energyb_in"):
 						self.MT_E_grid=numpy.union1d(self.MT_E_grid,rxn.energy_dist.energyb_in)
+                        print table.reactions.keys()
+                        print table.reactions[2].ang_energy_in
 
 		self.num_main_E   = self.MT_E_grid.__len__()
-
 		print "  -------------- done --------------- "
 
 		#print self.MT_E_grid.shape
@@ -270,7 +279,8 @@ class cross_section_data:
 					#print len(table.energy[IE:]), len(rxn.sigma)
 					this_array = numpy.interp( self.MT_E_grid, table.energy[IE:], rxn.sigma , left=0.0 )  #interpolate MT cross section, left means xs below 	threshold is 0
 					self.MT_array[:,MT_array_dex] = this_array  # insert into the MT array
-	
+                                        print MT 
+                                        print this_array
 					#  this MT is done, increment counter
 					MT_array_dex = MT_array_dex +1
 

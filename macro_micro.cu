@@ -4,6 +4,8 @@
 #include "warp_device.cuh"
 #include "check_cuda.h"
 
+#define DEBUG false
+
 __global__ void macro_micro_kernel(unsigned N, unsigned converged, unsigned n_materials, unsigned n_tallies, cross_section_data* d_xsdata, particle_data* d_particles, tally_data* d_tally, unsigned* d_remap, float* d_number_density_matrix){
 /*
 This kernel does a lot.  It does all the total interaction processes:  
@@ -97,7 +99,7 @@ All neutrons need these things done, so these routines all live in the same rout
 	unsigned	array_dex		= 0;
 	unsigned	adj_dex			= 0;
 	float		dotp			= 0.0;
-	float		macro_t_total	= 0.0;
+	float		macro_t_total	        = 0.0;
 	const float	epsilon			= 5.0e-6;
 	const float	push_value		= 2.0;
 	float surf_minimum, this_Q;
@@ -105,13 +107,13 @@ All neutrons need these things done, so these routines all live in the same rout
 
 	// load from arrays
 	unsigned	this_mat		=  matnum[tid];
-	int 		tally_index 	=  talnum[tid];
-	unsigned	dex				=   index[tid];  
-	unsigned	rn				= rn_bank[tid];
+	int 		tally_index 	        =  talnum[tid];
+	unsigned	dex			=   index[tid];  
+	unsigned	rn			= rn_bank[tid];
 	float		this_E			=       E[tid];
-	float		x				=   space[tid].x;
-	float		y				=   space[tid].y;
-	float		z				=   space[tid].z;
+	float		x			=   space[tid].x;
+	float		y			=   space[tid].y;
+	float		z			=   space[tid].z;
 	float		xhat			=   space[tid].xhat;
 	float		yhat			=   space[tid].yhat;
 	float		zhat			=   space[tid].zhat;
@@ -154,38 +156,47 @@ All neutrons need these things done, so these routines all live in the same rout
 			e0		= energy_grid[adj_dex];
 			e1		= 0.0;
 		}
-
+ 
 		// outside data, pass one array
 		// compute the total macroscopic cross section for this material
-		macro_t_total = sum_cross_section(	n_isotopes,
-											e0, this_E,
-											&s_number_density_matrix[this_mat*n_isotopes],  
-											&xs[ adj_dex   *n_columns]					);
+		macro_t_total = sum_cross_section( n_isotopes,
+	   					   e0, this_E,
+						  &s_number_density_matrix[this_mat*n_isotopes],  
+						  &xs[adj_dex * n_columns]);
 
-		if(!isfinite(macro_t_total) | macro_t_total<=0.0){printf("1 macro_t_total is wrong:  % 6.4E e0 % 6.4E e1 % 6.4E \n",macro_t_total,e0,e1);}
-	
+		if(!isfinite(macro_t_total) | macro_t_total <= 0.0) { 
+	          printf("1 macro_t_total is wrong:  %6.4E e0 %6.4E this_E %6.4E e1 %6.4E \n",macro_t_total,e0,this_E,e1);
+	        }
 		// determine the isotope in the material for this cell
-		this_tope = sample_cross_section(	n_isotopes, macro_t_total, rn1,
-											e0, this_E,
-											&s_number_density_matrix[this_mat*n_isotopes],  
-											&xs[ adj_dex   *n_columns]					);
+		this_tope = sample_cross_section( n_isotopes, macro_t_total, rn1,
+					   	  e0, this_E,
+						  &s_number_density_matrix[this_mat*n_isotopes],  
+						  &xs[adj_dex * n_columns]);
 
-	}
-	else{
-
+	} else {
 		// energy edges
 		e0 = energy_grid[dex];
 		e1 = energy_grid[dex+1];
 
+/*                printf("n_iso %i\n",n_isotopes);
+		float sum = 0.;	
+   	        for ( int i = 0 ; i < n_isotopes ; i++ ) {
+		  printf("diff %6.4e xs1 %6.4e xs2 %6.4e e1 %6.4e e0 %6.4e\n",xs[(dex+1)*i] - xs[dex*i],xs[(dex+1)*i],xs[(dex)*i],e1,e0);
+		  sum += ((xs[(dex+1)*i] - xs[dex*i]) / (e1 - e0) * (this_E-e0) + xs[dex*i])*s_number_density_matrix[i];
+                }        
+		printf("sum: %6.4E\n",sum);        
+ */
 		// inside the data, pass two arrays
 		// compute the total macroscopic cross section for this material
-		macro_t_total = sum_cross_section(	n_isotopes,
-											e0, e1, this_E,  
-											&s_number_density_matrix[this_mat*n_isotopes],
-											&xs[ dex   *n_columns],  
-											&xs[(dex+1)*n_columns]				);
+		macro_t_total = sum_cross_section( n_isotopes,
+			    			   e0, e1, this_E,  
+						  &s_number_density_matrix[this_mat*n_isotopes],
+					    	  &xs[dex * n_columns],  
+			 			  &xs[(dex+1)*n_columns]);
 
-		if(!isfinite(macro_t_total) | macro_t_total<=0.0){printf("2 macro_t_total is wrong:  % 6.4E e0 % 6.4E e1 % 6.4E \n",macro_t_total,e0,e1);}
+		if(!isfinite(macro_t_total) | macro_t_total <= 0.0) {
+	          printf("2 macro_t_total is wrong:  % 6.4E e0 %6.4E this_E % 6.4E e1 % 6.4E \n",macro_t_total,e0,this_E,e1);
+                }
 	
 		// determine the isotope in the material for this cell
 		this_tope = sample_cross_section(	n_isotopes, macro_t_total, rn1,
@@ -353,9 +364,9 @@ All neutrons need these things done, so these routines all live in the same rout
 			micro_t = sum_cross_section(	1,
 											e0, this_E,
 											&xs[ adj_dex   *n_columns + this_tope]	);
-
-			if(!isfinite(micro_t) | micro_t<=0.0){printf("1 micro_t is wrong:  % 6.4E e0 % 6.4E e1 % 6.4E \n!",micro_t,e0,e1);}
-
+                        if(DEBUG) {
+			if(!isfinite(micro_t) | micro_t<=0.0 ){printf("1 micro_t is wrong:  % 6.4E e0 % 6.4E e1 % 6.4E \n!",micro_t,e0,e1);}
+}
 			// determine the reaction/Q for this isotope, use non-multiplier function overload.  Returns index from col_start!
 			this_col = col_start + sample_cross_section(	(col_end-col_start), micro_t, get_rand(&rn),
 															e0, this_E,
@@ -383,9 +394,9 @@ All neutrons need these things done, so these routines all live in the same rout
 											e0, e1, this_E,
 											&xs[ dex   *n_columns + this_tope],  
 											&xs[(dex+1)*n_columns + this_tope] );
-
+                        if(DEBUG) {
 			if(!isfinite(micro_t) | micro_t<=0.0){printf("2 micro_t is wrong:  % 6.4E e0 % 6.4E e1 % 6.4E \n",micro_t,e0,e1);}
-			
+			}
 			// determine the reaction/Q for this isotope, use non-multiplier function overload.  Returns index from col_start!
 			this_col = col_start + sample_cross_section(	(col_end-col_start), micro_t, get_rand(&rn),
 															e0, e1, this_E,
